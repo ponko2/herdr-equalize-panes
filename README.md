@@ -13,14 +13,19 @@ so the panes go back to sharing the tab evenly.
 ## Requirements
 
 - Herdr 0.8.2 or later
-- Linux or macOS
-- A Rust toolchain, because the plugin is built from source on install
+- ARM64 macOS or 64-bit Linux for a pre-built binary
+- Bash
+- `curl`, `tar`, and a SHA-256 utility (`shasum` on macOS or `sha256sum` on Linux) for a pre-built binary
+- A Rust toolchain with Cargo on other platforms, to build from source
 
 ## Install
 
 ```sh
 herdr plugin install ponko2/herdr-equalize-panes
 ```
+
+On supported platforms, the installer downloads the matching pre-built binary from GitHub Releases.
+On other platforms, it builds from source when Cargo is available.
 
 ## Uninstall
 
