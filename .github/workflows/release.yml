@@ -1,0 +1,66 @@
+name: Release
+on:
+  push:
+    branches: [main]
+permissions: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # Release Please creates release pull requests, tags, and GitHub releases.
+      issues: write # Release Please updates issues when managing release pull requests.
+      pull-requests: write # Release Please creates and updates release pull requests.
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+  upload-assets:
+    name: Upload Assets
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: write # The upload step attaches built archives and checksums to the GitHub release.
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+          persist-credentials: false
+      - name: Build release binary
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build --locked --release --target "$TARGET"
+      - name: Package release assets
+        env:
+          TARGET: ${{ matrix.target }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          asset="equalize-panes-$VERSION-$TARGET.tar.gz"
+          tar --create --gzip --file "$asset" --directory "target/$TARGET/release" equalize-panes
+          shasum --algorithm 256 "$asset" >"$asset.sha256"
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+          TARGET: ${{ matrix.target }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: gh release upload "$TAG_NAME" "equalize-panes-$VERSION-$TARGET.tar.gz" "equalize-panes-$VERSION-$TARGET.tar.gz.sha256"
