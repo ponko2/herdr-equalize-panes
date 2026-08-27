@@ -1,0 +1,387 @@
+name: CI
+on:
+  merge_group: {}
+  pull_request: {}
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  required:
+    name: "Required Checks: CI"
+    if: ${{ always() }}
+    needs:
+      - changed-files
+      - actionlint
+      - ghalint
+      - zizmor
+      - build
+      - clippy
+      - commitlint
+      - deadnix
+      - editorconfig
+      - nixfmt
+      - oxfmt
+      - rustfmt
+      - shear
+      - statix
+      - test
+      - yamllint
+    runs-on: ubuntu-slim
+    timeout-minutes: 60
+    steps:
+      - name: Fail if any required jobs failed or cancelled
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
+  changed-files:
+    name: Get changed files
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      actions: ${{ steps.changed-files.outputs.actions_any_modified == 'true' }}
+      nix: ${{ steps.changed-files.outputs.nix_any_modified == 'true' }}
+      rust: ${{ steps.changed-files.outputs.rust_any_modified == 'true' }}
+      yamllint: ${{ steps.changed-files.outputs.yamllint_any_modified == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 50 # Assume PRs are less than 50 commits
+          persist-credentials: true
+      - name: Get relevant files changed per group
+        id: changed-files
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files_yaml: |
+            common: &common
+              - .github/workflows/ci.yml
+            dependencies: &dependencies
+              - flake.lock
+              - flake.nix
+              - rust-toolchain.toml
+            actions:
+              - "**/action.{yaml,yml}"
+              - ".github/workflows/*.{yaml,yml}"
+            nix:
+              - *common
+              - *dependencies
+              - "**/*.nix"
+            rust:
+              - *common
+              - *dependencies
+              - "**/*.rs"
+              - "**/Cargo.toml"
+              - Cargo.lock
+            yamllint:
+              - *common
+              - "**/*.{yaml,yml}"
+  actionlint:
+    name: actionlint
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run actionlint
+        uses: ponko2/actions/actionlint@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+  ghalint:
+    name: ghalint
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-slim
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run ghalint
+        uses: ponko2/actions/ghalint@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+  zizmor:
+    name: zizmor
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run zizmor
+        uses: ponko2/actions/zizmor@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+  build:
+    name: Build
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cmd-format: nix develop -c {0}
+      - name: Run Build
+        run: nix develop --command cargo build --locked
+  clippy:
+    name: Clippy
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cmd-format: nix develop -c {0}
+      - name: Run Clippy
+        run: nix develop --command cargo clippy -- -D warnings
+  commitlint:
+    name: commitlint
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 50 # Assume PRs are less than 50 commits
+          filter: blob:none
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Validate all commits from PR
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: nix --quiet run .#commitlint -- --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+  deadnix:
+    name: deadnix
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Run deadnix
+        run: nix --quiet run .#deadnix
+  editorconfig:
+    name: EditorConfig
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Run EditorConfig checker
+        run: nix --quiet run .#editorconfig-checker
+  nixfmt:
+    name: Nixfmt
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Run Nixfmt
+        run: nix fmt -- --ci
+  oxfmt:
+    name: Oxfmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Run Oxfmt
+        run: nix --quiet run .#oxfmt -- --check
+  rustfmt:
+    name: rustfmt
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cmd-format: nix develop -c {0}
+      - name: Run rustfmt
+        run: nix develop --command cargo fmt --check
+  shear:
+    name: Shear
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Run Shear
+        run: nix develop --command cargo shear --deny-warnings
+  statix:
+    name: statix
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          prefetch-dependencies: false
+      - name: Run statix
+        run: nix --quiet run .#statix -- check
+  test:
+    name: Test
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: ponko2/actions/setup-nix@236efcf85fdbe785d92e646d4003f3bb2cb069c4 # v1.6.0
+        with:
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cmd-format: nix develop -c {0}
+      - name: Run Test
+        run: nix develop --command cargo nextest run --locked --no-tests=warn
+  yamllint:
+    name: yamllint
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.yamllint == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run yamllint
+        run: yamllint --format=github --strict .
