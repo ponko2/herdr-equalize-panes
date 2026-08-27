@@ -6,7 +6,7 @@ description = "Keep panes the same size as the layout changes"
 platforms = ["linux", "macos"]
 
 [[build]]
-command = ["install.sh"]
+command = ["./install.sh"]
 
 [[actions]]
 id = "equalize"
