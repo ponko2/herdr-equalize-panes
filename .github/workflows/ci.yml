@@ -135,7 +135,15 @@ jobs:
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     permissions:
       contents: read
@@ -153,7 +161,9 @@ jobs:
         with:
           cmd-format: nix develop -c {0}
       - name: Run Build
-        run: nix develop --command cargo build --locked
+        env:
+          TARGET: ${{ matrix.target }}
+        run: nix develop --command cargo build --locked --target "$TARGET"
   clippy:
     name: Clippy
     if: ${{ always() && !failure() && !cancelled() &&
