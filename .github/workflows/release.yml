@@ -50,11 +50,6 @@ jobs:
         with:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
           cachix-skip-push: true
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          cmd-format: nix develop -c {0}
-          save-if: false
       - name: Build release binary
         env:
           TARGET: ${{ matrix.target }}
