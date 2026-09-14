@@ -21,11 +21,35 @@
       ];
       perSystem =
         { pkgs, system, ... }:
+        let
+          rust-toolchain = pkgs.fenix.fromToolchainFile {
+            file = ./rust-toolchain.toml;
+            sha256 = "p8h3Sl/YRByZfZTAKXdsvF6xEenXKrXSVvpphmZENH4=";
+          };
+          rust-platform = pkgs.makeRustPlatform {
+            cargo = rust-toolchain;
+            rustc = rust-toolchain;
+          };
+        in
         {
           _module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [
               fenix.overlays.default
+              (_final: prev: {
+                hk = prev.hk.overrideAttrs (oldAttrs: rec {
+                  version = "2.0.0";
+                  src = prev.fetchFromGitHub {
+                    inherit (oldAttrs.src) owner repo;
+                    tag = "v${version}";
+                    hash = "sha256-71uzlm4/YAUNtFufut8gxFei9QGo19kdKCLKch186VY=";
+                  };
+                  cargoDeps = rust-platform.fetchCargoVendor {
+                    inherit src;
+                    hash = "sha256-X9NQmhXuCYVFe+Qm4UxYl3T/VG/FGt9PvfFAMT8Heww=";
+                  };
+                });
+              })
             ];
           };
           apps = {
@@ -52,10 +76,6 @@
           };
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
-              (pkgs.fenix.fromToolchainFile {
-                file = ./rust-toolchain.toml;
-                sha256 = "p8h3Sl/YRByZfZTAKXdsvF6xEenXKrXSVvpphmZENH4=";
-              })
               cargo-features-manager
               cargo-nextest
               cargo-shear
@@ -67,6 +87,7 @@
               nixfmt
               oxfmt
               rust-analyzer
+              rust-toolchain
               statix
               yamllint
             ];
