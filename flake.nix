@@ -38,15 +38,15 @@
               fenix.overlays.default
               (_final: prev: {
                 hk = prev.hk.overrideAttrs (oldAttrs: rec {
-                  version = "2.0.0";
+                  version = "2.0.1";
                   src = prev.fetchFromGitHub {
                     inherit (oldAttrs.src) owner repo;
                     tag = "v${version}";
-                    hash = "sha256-71uzlm4/YAUNtFufut8gxFei9QGo19kdKCLKch186VY=";
+                    hash = "sha256-Rfl4Ssps+2PUcwj01+srDFPjMq78ec4XWmhgMlbq7iM=";
                   };
                   cargoDeps = rust-platform.fetchCargoVendor {
                     inherit src;
-                    hash = "sha256-X9NQmhXuCYVFe+Qm4UxYl3T/VG/FGt9PvfFAMT8Heww=";
+                    hash = "sha256-P6RV8R1hRPkBX0iAfNEiFAuVdcUfg3PpsZ1YB7s2B3E=";
                   };
                 });
               })
