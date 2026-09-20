@@ -83,7 +83,6 @@
               deadnix
               editorconfig-checker
               hk
-              nixd
               nixfmt
               oxfmt
               rust-analyzer
