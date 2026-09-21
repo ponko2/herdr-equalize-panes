@@ -1,0 +1,8 @@
+[env]
+_.nix = true
+
+[plugins]
+nix = "https://github.com/mise-plugins/mise-nix"
+
+[settings]
+env_cache = true
