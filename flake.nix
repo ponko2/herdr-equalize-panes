@@ -53,6 +53,10 @@
             ];
           };
           apps = {
+            actionlint = {
+              type = "app";
+              program = "${pkgs.actionlint}/bin/actionlint";
+            };
             commitlint = {
               type = "app";
               program = "${pkgs.commitlint}/bin/commitlint";
@@ -65,6 +69,10 @@
               type = "app";
               program = "${pkgs.editorconfig-checker}/bin/editorconfig-checker";
             };
+            ghalint = {
+              type = "app";
+              program = "${pkgs.ghalint}/bin/ghalint";
+            };
             oxfmt = {
               type = "app";
               program = "${pkgs.oxfmt}/bin/oxfmt";
@@ -73,15 +81,25 @@
               type = "app";
               program = "${pkgs.statix}/bin/statix";
             };
+            yamllint = {
+              type = "app";
+              program = "${pkgs.yamllint}/bin/yamllint";
+            };
+            zizmor = {
+              type = "app";
+              program = "${pkgs.zizmor}/bin/zizmor";
+            };
           };
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
+              actionlint
               cargo-features-manager
               cargo-nextest
               cargo-shear
               commitlint
               deadnix
               editorconfig-checker
+              ghalint
               hk
               nixfmt
               oxfmt
@@ -89,6 +107,7 @@
               rust-toolchain
               statix
               yamllint
+              zizmor
             ];
           };
           formatter = pkgs.nixfmt-tree;
