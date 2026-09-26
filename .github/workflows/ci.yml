@@ -67,6 +67,7 @@ jobs:
               - flake.nix
               - rust-toolchain.toml
             actions:
+              - *dependencies
               - "**/action.{yaml,yml}"
               - ".github/workflows/*.{yaml,yml}"
             nix:
@@ -81,6 +82,7 @@ jobs:
               - Cargo.lock
             yamllint:
               - *common
+              - *dependencies
               - "**/*.{yaml,yml}"
   actionlint:
     name: actionlint
