@@ -24,7 +24,7 @@
         let
           rust-toolchain = pkgs.fenix.fromToolchainFile {
             file = ./rust-toolchain.toml;
-            sha256 = "p8h3Sl/YRByZfZTAKXdsvF6xEenXKrXSVvpphmZENH4=";
+            sha256 = "zm3dyIY2T414ZRR3EhLOvptzG6gta4WZUcawzMUWtqI=";
           };
         in
         {
