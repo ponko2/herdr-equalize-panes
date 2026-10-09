@@ -2,7 +2,7 @@
 _.nix = true
 
 [plugins]
-nix = "https://github.com/mise-plugins/mise-nix"
+nix = "https://github.com/joshbode/mise-nix"
 
 [settings]
 env_cache = true
