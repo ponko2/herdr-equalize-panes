@@ -69,3 +69,17 @@ jobs:
           TARGET: ${{ matrix.target }}
           VERSION: ${{ needs.release-please.outputs.version }}
         run: gh release upload "$TAG_NAME" "equalize-panes-$VERSION-$TARGET.tar.gz" "equalize-panes-$VERSION-$TARGET.tar.gz.sha256"
+  publish-release:
+    name: Publish Release
+    needs: [release-please, upload-assets]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # Publishes the release after all assets have been uploaded.
+    steps:
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: gh release edit "$TAG_NAME" --draft=false
