@@ -181,6 +181,7 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cmd-format: nix develop -c {0}
+          key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Build
         env:
           TARGET: ${{ matrix.target }}
@@ -207,6 +208,7 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cmd-format: nix develop -c {0}
+          key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Clippy
         run: nix develop --command cargo clippy -- -D warnings
   commitlint:
@@ -333,6 +335,7 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cmd-format: nix develop -c {0}
+          key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run rustfmt
         run: nix develop --command cargo fmt --check
   shear:
@@ -398,6 +401,7 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cmd-format: nix develop -c {0}
+          key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Test
         run: nix develop --command cargo nextest run --locked --no-tests=warn
   yamllint:
