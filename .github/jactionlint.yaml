@@ -1,1 +1,6 @@
 profile: pedantic
+rules:
+  secrets-outside-env:
+    level: warn
+    allow:
+      - CACHIX_AUTH_TOKEN
