@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Run Release Please
         id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        uses: googleapis/release-please-action@v5.0.0
   upload-assets:
     name: Upload Assets
     needs: release-please
@@ -41,12 +41,12 @@ jobs:
       contents: write # The upload step attaches built archives and checksums to the GitHub release.
     steps:
       - name: Check out release tag
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
           persist-credentials: false
       - name: Set up Nix
-        uses: ponko2/actions/setup-nix@7bd9f0fca49fd0950a9425c1889520d43077b497 # v1.8.0
+        uses: ponko2/actions/setup-nix@v1.8.0
         with:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
           cachix-skip-push: true
