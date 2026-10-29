@@ -9,7 +9,7 @@ concurrency:
 jobs:
   release-please:
     name: Release Please
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: write # Release Please creates release pull requests, tags, and GitHub releases.
@@ -31,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest
+          - runner: macos-26
             target: aarch64-apple-darwin
-          - runner: ubuntu-latest
+          - runner: ubuntu-26.04
             target: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
@@ -54,6 +54,7 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: nix develop --command cargo build --locked --release --target "$TARGET"
+        shell: bash
       - name: Package release assets
         env:
           TARGET: ${{ matrix.target }}
@@ -62,6 +63,7 @@ jobs:
           asset="equalize-panes-$VERSION-$TARGET.tar.gz"
           tar --create --gzip --file "$asset" --directory "target/$TARGET/release" equalize-panes
           shasum --algorithm 256 "$asset" >"$asset.sha256"
+        shell: bash
       - name: Upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,11 +71,12 @@ jobs:
           TARGET: ${{ matrix.target }}
           VERSION: ${{ needs.release-please.outputs.version }}
         run: gh release upload "$TAG_NAME" "equalize-panes-$VERSION-$TARGET.tar.gz" "equalize-panes-$VERSION-$TARGET.tar.gz.sha256"
+        shell: bash
   publish-release:
     name: Publish Release
     needs: [release-please, upload-assets]
     if: ${{ needs.release-please.outputs.release_created }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: write # Publishes the release after all assets have been uploaded.
@@ -84,3 +87,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: gh release edit "$TAG_NAME" --draft=false
+        shell: bash

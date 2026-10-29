@@ -15,9 +15,7 @@ jobs:
     if: ${{ always() }}
     needs:
       - changed-files
-      - actionlint
-      - ghalint
-      - zizmor
+      - jactionlint
       - build
       - clippy
       - commitlint
@@ -31,21 +29,22 @@ jobs:
       - test
       - yamllint
     runs-on: ubuntu-slim
-    timeout-minutes: 60
+    timeout-minutes: 15
     steps:
       - name: Fail if any required jobs failed or cancelled
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: exit 1
+        shell: bash
   changed-files:
     name: Get changed files
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-slim
-    timeout-minutes: 60
+    timeout-minutes: 15
     permissions:
       contents: read
     outputs:
       # reference: https://github.com/tj-actions/changed-files#outputs-
-      actions: ${{ steps.changed-files.outputs.actions_any_modified == 'true' }}
+      jactionlint: ${{ steps.changed-files.outputs.jactionlint_any_modified == 'true' }}
       nix: ${{ steps.changed-files.outputs.nix_any_modified == 'true' }}
       rust: ${{ steps.changed-files.outputs.rust_any_modified == 'true' }}
       yamllint: ${{ steps.changed-files.outputs.yamllint_any_modified == 'true' }}
@@ -66,10 +65,11 @@ jobs:
               - flake.lock
               - flake.nix
               - rust-toolchain.toml
-            actions:
+            jactionlint:
               - *dependencies
               - "**/action.{yaml,yml}"
               - ".github/workflows/*.{yaml,yml}"
+              - .github/jactionlint.yaml
             nix:
               - *common
               - *dependencies
@@ -84,12 +84,12 @@ jobs:
               - *common
               - *dependencies
               - "**/*.{yaml,yml}"
-  actionlint:
-    name: actionlint
+  jactionlint:
+    name: jactionlint
     if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.jactionlint == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -103,54 +103,9 @@ jobs:
         with:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
           prefetch-dependencies: false
-      - name: Run actionlint
-        run: |
-          echo "::add-matcher::.github/actionlint-matcher.json"
-          nix --quiet run .#actionlint -- -color
-  ghalint:
-    name: ghalint
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@7bd9f0fca49fd0950a9425c1889520d43077b497 # v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run ghalint
-        run: |
-          nix --quiet run .#ghalint -- run
-          nix --quiet run .#ghalint -- act
-  zizmor:
-    name: zizmor
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.actions == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@7bd9f0fca49fd0950a9425c1889520d43077b497 # v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run zizmor
-        run: nix --quiet run .#zizmor -- -p --format=github --min-severity=low .
+      - name: Run jactionlint
+        run: nix --quiet run .#jactionlint -- --format=github --color
+        shell: bash
   build:
     name: Build
     if: ${{ always() && !failure() && !cancelled() &&
@@ -160,9 +115,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest
+          - runner: macos-26
             target: aarch64-apple-darwin
-          - runner: ubuntu-latest
+          - runner: ubuntu-26.04
             target: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
@@ -186,12 +141,13 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: nix develop --command cargo build --locked --target "$TARGET"
+        shell: bash
   clippy:
     name: Clippy
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -211,10 +167,11 @@ jobs:
           key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Clippy
         run: nix develop --command cargo clippy -- -D warnings
+        shell: bash
   commitlint:
     name: commitlint
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -235,12 +192,13 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: nix --quiet run .#commitlint -- --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+        shell: bash
   deadnix:
     name: deadnix
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -256,9 +214,10 @@ jobs:
           prefetch-dependencies: false
       - name: Run deadnix
         run: nix --quiet run .#deadnix
+        shell: bash
   editorconfig:
     name: EditorConfig
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -274,12 +233,13 @@ jobs:
           prefetch-dependencies: false
       - name: Run EditorConfig checker
         run: nix --quiet run .#editorconfig-checker
+        shell: bash
   nixfmt:
     name: Nixfmt
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -295,9 +255,10 @@ jobs:
           prefetch-dependencies: false
       - name: Run Nixfmt
         run: nix fmt -- --ci
+        shell: bash
   oxfmt:
     name: Oxfmt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -313,12 +274,13 @@ jobs:
           prefetch-dependencies: false
       - name: Run Oxfmt
         run: nix --quiet run .#oxfmt -- --check
+        shell: bash
   rustfmt:
     name: rustfmt
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -338,12 +300,13 @@ jobs:
           key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run rustfmt
         run: nix develop --command cargo fmt --check
+        shell: bash
   shear:
     name: Shear
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -358,12 +321,13 @@ jobs:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Run Shear
         run: nix develop --command cargo shear --deny-warnings
+        shell: bash
   statix:
     name: statix
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -379,12 +343,13 @@ jobs:
           prefetch-dependencies: false
       - name: Run statix
         run: nix --quiet run .#statix -- check
+        shell: bash
   test:
     name: Test
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.rust == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -404,12 +369,13 @@ jobs:
           key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Test
         run: nix develop --command cargo nextest run --locked --no-tests=warn
+        shell: bash
   yamllint:
     name: yamllint
     if: ${{ always() && !failure() && !cancelled() &&
       (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.yamllint == 'true') }}
     needs: changed-files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -425,3 +391,4 @@ jobs:
           prefetch-dependencies: false
       - name: Run yamllint
         run: nix --quiet run .#yamllint -- --format=github --strict .
+        shell: bash
