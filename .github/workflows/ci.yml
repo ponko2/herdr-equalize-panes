@@ -104,7 +104,10 @@ jobs:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
           prefetch-dependencies: false
       - name: Run jactionlint
-        run: nix --quiet run .#jactionlint -- --format=github --color
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          JACTIONLINT_ONLINE: 1
+        run: nix --quiet run .#jactionlint -- --format=github --color --strict-exit
         shell: bash
   build:
     name: Build
