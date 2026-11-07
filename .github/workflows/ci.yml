@@ -24,10 +24,10 @@ jobs:
       - nixfmt
       - oxfmt
       - rustfmt
+      - ryl
       - shear
       - statix
       - test
-      - yamllint
     runs-on: ubuntu-slim
     timeout-minutes: 15
     steps:
@@ -47,7 +47,7 @@ jobs:
       jactionlint: ${{ steps.changed-files.outputs.jactionlint_any_modified == 'true' }}
       nix: ${{ steps.changed-files.outputs.nix_any_modified == 'true' }}
       rust: ${{ steps.changed-files.outputs.rust_any_modified == 'true' }}
-      yamllint: ${{ steps.changed-files.outputs.yamllint_any_modified == 'true' }}
+      ryl: ${{ steps.changed-files.outputs.ryl_any_modified == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -80,10 +80,11 @@ jobs:
               - "**/*.rs"
               - "**/Cargo.toml"
               - Cargo.lock
-            yamllint:
+            ryl:
               - *common
               - *dependencies
               - "**/*.{yaml,yml}"
+              - .ryl.toml
   jactionlint:
     name: jactionlint
     if: ${{ always() && !failure() && !cancelled() &&
@@ -304,6 +305,28 @@ jobs:
       - name: Run rustfmt
         run: nix develop --command cargo fmt --check
         shell: bash
+  ryl:
+    name: ryl
+    if: ${{ always() && !failure() && !cancelled() &&
+      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.ryl == 'true') }}
+    needs: changed-files
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up mise
+        uses: jdx/mise-action@v5.2.7
+      - name: Run ryl
+        run: ryl --format=github --strict .
+        shell: bash
+      - name: Run ryl format
+        run: ryl format --check --output-format=github .
+        shell: bash
   shear:
     name: Shear
     if: ${{ always() && !failure() && !cancelled() &&
@@ -372,26 +395,4 @@ jobs:
           key: ${{ hashFiles('flake.lock', 'flake.nix') }}
       - name: Run Test
         run: nix develop --command cargo nextest run --locked --no-tests=warn
-        shell: bash
-  yamllint:
-    name: yamllint
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.yamllint == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run yamllint
-        run: nix --quiet run .#yamllint -- --format=github --strict .
         shell: bash

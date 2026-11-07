@@ -5,6 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@v7.0.1'
+        - 'jdx/mise-action@v5.2.7'
         - 'ponko2/actions@v1.8.0'
         - 'swatinem/rust-cache@v2.9.3'
         - 'tj-actions/changed-files@v47.0.6'
@@ -28,6 +29,11 @@ dependencies:
         commit: 'sha1-45996ed1f6d02564a971a2fa1b5860e934307cf7'
         owner_id: 16785467
         repo_id: 262236530
+    'jdx/mise-action@v5.2.7':
+        ref: 'v5.2.7'
+        commit: 'sha1-b44d12e7d0d8ee7461bb893e1b1993500433185b'
+        owner_id: 216188
+        repo_id: 738284564
     'nixos/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6':
         ref: 'v1.0.0'
         commit: 'sha1-62c1943b776c509394b550f3f983adc14e9212d6'
