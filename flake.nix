@@ -35,42 +35,13 @@
             ];
           };
           apps = {
-            commitlint = {
-              type = "app";
-              program = "${pkgs.commitlint}/bin/commitlint";
-            };
             deadnix = {
               type = "app";
               program = "${pkgs.deadnix}/bin/deadnix";
             };
-            editorconfig-checker = {
-              type = "app";
-              program = "${pkgs.editorconfig-checker}/bin/editorconfig-checker";
-            };
-            jactionlint = {
-              type = "app";
-              program = "${
-                pkgs.writeShellApplication {
-                  name = "jactionlint";
-                  runtimeInputs = [
-                    pkgs.jactionlint
-                    pkgs.shellcheck
-                  ];
-                  text = ''exec jactionlint "$@"'';
-                }
-              }/bin/jactionlint";
-            };
-            oxfmt = {
-              type = "app";
-              program = "${pkgs.oxfmt}/bin/oxfmt";
-            };
             statix = {
               type = "app";
               program = "${pkgs.statix}/bin/statix";
-            };
-            yamllint = {
-              type = "app";
-              program = "${pkgs.yamllint}/bin/yamllint";
             };
           };
           devShells.default = pkgs.mkShell {
@@ -78,18 +49,11 @@
               cargo-features-manager
               cargo-nextest
               cargo-shear
-              commitlint
               deadnix
-              editorconfig-checker
-              hk
-              jactionlint
               nixfmt
-              oxfmt
               rust-analyzer
               rust-toolchain
-              shellcheck
               statix
-              yamllint
             ];
           };
           formatter = pkgs.nixfmt-tree;

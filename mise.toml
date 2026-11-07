@@ -9,3 +9,9 @@ env_cache = true
 
 [tools]
 "aqua:owenlamont/ryl" = "latest"
+"npm:@commitlint/cli" = "latest"
+editorconfig-checker = "latest"
+hk = "latest"
+jactionlint = "latest"
+oxfmt = "latest"
+shellcheck = "latest"
