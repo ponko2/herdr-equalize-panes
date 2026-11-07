@@ -13,5 +13,10 @@ env_cache = true
 editorconfig-checker = "latest"
 hk = "latest"
 jactionlint = "latest"
+mr-boxington = "latest"
 oxfmt = "latest"
 shellcheck = "latest"
+
+[wrappers.cargo]
+command = "mbx"
+env = { MBX_CARGO_SHIM_MODE = "1" }

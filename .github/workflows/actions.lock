@@ -6,8 +6,8 @@ workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@v7.0.1'
         - 'jdx/mise-action@v5.2.7'
+        - 'jdx/mr-boxington-action@v1.7.3'
         - 'ponko2/actions@v1.8.0'
-        - 'swatinem/rust-cache@v2.9.3'
         - 'tj-actions/changed-files@v47.0.6'
     '.github/workflows/release.yml':
         - 'actions/checkout@v7.0.1'
@@ -34,6 +34,11 @@ dependencies:
         commit: 'sha1-b44d12e7d0d8ee7461bb893e1b1993500433185b'
         owner_id: 216188
         repo_id: 738284564
+    'jdx/mr-boxington-action@v1.7.3':
+        ref: 'v1.7.3'
+        commit: 'sha1-88acf2bb50552c7c508cbac13e5f8c576b95b1de'
+        owner_id: 216188
+        repo_id: 1345301886
     'nixos/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6':
         ref: 'v1.0.0'
         commit: 'sha1-62c1943b776c509394b550f3f983adc14e9212d6'
@@ -47,11 +52,6 @@ dependencies:
         uses:
             - 'cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866'
             - 'nixos/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6'
-    'swatinem/rust-cache@v2.9.3':
-        ref: 'v2.9.3'
-        commit: 'sha1-d1527c8f67ef9af357290475d4af4b0fab8f12e0'
-        owner_id: 580492
-        repo_id: 298565987
     'tj-actions/changed-files@v47.0.6':
         ref: 'v47.0.6'
         commit: 'sha1-9426d40962ed5378910ee2e21d5f8c6fcbf2dd96'
