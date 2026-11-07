@@ -166,6 +166,47 @@ url = "https://github.com/jdx/jactionlint/releases/download/v2.5.0/jactionlint_2
 signer = "sigstore-oidc:https://github.com/jdx/jactionlint/.github/workflows/release.yaml"
 repository_ids = { repository = "1404951382" }
 
+[[tools.mr-boxington]]
+version = "1.26.0"
+backend = "packslip:github.com/jdx/mr-boxington"
+specifiers = ["latest"]
+
+[tools.mr-boxington."platforms.linux-arm64"]
+checksum = "sha256:30dad5b98974a37447249572c2d4f1dc065b3b774fa74f20f8a37bb73fb26767"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-aarch64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
+[tools.mr-boxington."platforms.linux-arm64-musl"]
+checksum = "sha256:a80cb900de756d083bf70e24fbe1e5933560fd806c3778118b9da22a61ebd287"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-aarch64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
+[tools.mr-boxington."platforms.linux-x64"]
+checksum = "sha256:decb2c1233d194d9d8f98fa926d86a5f726e9091e92fcff75f44a53ed9cab2b9"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
+[tools.mr-boxington."platforms.linux-x64-musl"]
+checksum = "sha256:3f7cddaae61d74f263b458feecd7819b14df6b44491629d14f0bacbdad0f2d8b"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-x86_64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
+[tools.mr-boxington."platforms.macos-arm64"]
+checksum = "sha256:5927803d54f313600f7c6792369867eb26f9dfaa909b04fb5727efcf0d17b0b7"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-aarch64-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
+[tools.mr-boxington."platforms.windows-x64"]
+checksum = "sha256:4a61b7c07323f3cd223761e548c32797cd2feef28f62d91ff2c9ac66eb7e3870"
+url = "https://github.com/jdx/mr-boxington/releases/download/v1.26.0/mbx-x86_64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/jdx/mr-boxington/.github/workflows/release.yml"
+repository_ids = { repository = "1340721957" }
+
 [[tools."npm:@commitlint/cli"]]
 version = "21.2.4"
 aube = { path = ".mise/locks/npm-commitlint-cli/21.2.4", digest = "sha256:028e3dec258f34cfba938d8bce920fbce42f36576ac57549d4a9640ba11ef804" }
