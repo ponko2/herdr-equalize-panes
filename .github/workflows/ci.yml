@@ -64,7 +64,8 @@ jobs:
             dependencies: &dependencies
               - flake.lock
               - flake.nix
-              - rust-toolchain.toml
+              - mise.lock
+              - mise.toml
             jactionlint:
               - *dependencies
               - "**/action.{yaml,yml}"
@@ -80,6 +81,7 @@ jobs:
               - "**/*.rs"
               - "**/Cargo.toml"
               - Cargo.lock
+              - rust-toolchain.toml
             ryl:
               - *common
               - *dependencies
