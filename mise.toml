@@ -6,3 +6,6 @@ nix = "https://github.com/joshbode/mise-nix"
 
 [settings]
 env_cache = true
+
+[tools]
+"aqua:owenlamont/ryl" = "latest"

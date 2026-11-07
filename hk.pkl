@@ -10,6 +10,8 @@ steps {
   ["jactionlint"] = Builtins.jactionlint
   ["nix_fmt"] = Builtins.nix_fmt
   ["oxfmt"] = Builtins.oxfmt
+  ["ryl"] = Builtins.ryl
+  ["ryl_format"] = Builtins.ryl_format
   ["statix"] {
     glob = "**/*.nix"
     check = new CommandSpec {
@@ -21,7 +23,6 @@ steps {
       effect = "write"
     }
   }
-  ["yamllint"] = Builtins.yamllint
 }
 
 hooks {
