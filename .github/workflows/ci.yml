@@ -19,14 +19,11 @@ jobs:
       - build
       - clippy
       - commitlint
-      - deadnix
       - editorconfig
-      - nixfmt
       - oxfmt
       - rustfmt
       - ryl
       - shear
-      - statix
       - test
     runs-on: ubuntu-slim
     timeout-minutes: 15
@@ -45,7 +42,6 @@ jobs:
     outputs:
       # reference: https://github.com/tj-actions/changed-files#outputs-
       jactionlint: ${{ steps.changed-files.outputs.jactionlint_any_modified == 'true' }}
-      nix: ${{ steps.changed-files.outputs.nix_any_modified == 'true' }}
       rust: ${{ steps.changed-files.outputs.rust_any_modified == 'true' }}
       ryl: ${{ steps.changed-files.outputs.ryl_any_modified == 'true' }}
     steps:
@@ -62,8 +58,6 @@ jobs:
             common: &common
               - .github/workflows/ci.yml
             dependencies: &dependencies
-              - flake.lock
-              - flake.nix
               - mise.lock
               - mise.toml
             jactionlint:
@@ -71,10 +65,6 @@ jobs:
               - "**/action.{yaml,yml}"
               - ".github/workflows/*.{yaml,yml}"
               - .github/jactionlint.yaml
-            nix:
-              - *common
-              - *dependencies
-              - "**/*.nix"
             rust:
               - *common
               - *dependencies
@@ -96,6 +86,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: jactionlint,shellcheck
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -103,6 +95,8 @@ jobs:
           persist-credentials: false
       - name: Set up mise
         uses: jdx/mise-action@v5.2.7
+        with:
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Run jactionlint
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -131,16 +125,12 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Set up mr boxington
         uses: jdx/mr-boxington-action@v1.7.3
       - name: Run Build
         env:
           TARGET: ${{ matrix.target }}
-        run: nix develop --command mbx build --locked --target "$TARGET"
+        run: mbx build --locked --target "$TARGET"
         shell: bash
   clippy:
     name: Clippy
@@ -156,14 +146,10 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Set up mr boxington
         uses: jdx/mr-boxington-action@v1.7.3
       - name: Run Clippy
-        run: nix develop --command mbx clippy -- -D warnings
+        run: mbx clippy -- -D warnings
         shell: bash
   commitlint:
     name: commitlint
@@ -172,6 +158,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: npm:@commitlint/cli
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -181,33 +169,13 @@ jobs:
           persist-credentials: false
       - name: Set up mise
         uses: jdx/mise-action@v5.2.7
+        with:
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Validate all commits from PR
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
-        shell: bash
-  deadnix:
-    name: deadnix
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run deadnix
-        run: nix --quiet run .#deadnix
         shell: bash
   editorconfig:
     name: EditorConfig
@@ -215,6 +183,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: editorconfig-checker
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -222,30 +192,10 @@ jobs:
           persist-credentials: false
       - name: Set up mise
         uses: jdx/mise-action@v5.2.7
+        with:
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Run EditorConfig checker
         run: editorconfig-checker
-        shell: bash
-  nixfmt:
-    name: Nixfmt
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run Nixfmt
-        run: nix fmt -- --ci
         shell: bash
   oxfmt:
     name: Oxfmt
@@ -253,6 +203,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: oxfmt
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -260,6 +212,8 @@ jobs:
           persist-credentials: false
       - name: Set up mise
         uses: jdx/mise-action@v5.2.7
+        with:
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Run Oxfmt
         run: oxfmt --check
         shell: bash
@@ -277,14 +231,8 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Set up mr boxington
-        uses: jdx/mr-boxington-action@v1.7.3
       - name: Run rustfmt
-        run: nix develop --command mbx fmt --check
+        run: cargo fmt --check
         shell: bash
   ryl:
     name: ryl
@@ -295,6 +243,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: aqua:owenlamont/ryl
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -302,6 +252,8 @@ jobs:
           persist-credentials: false
       - name: Set up mise
         uses: jdx/mise-action@v5.2.7
+        with:
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Run ryl
         run: ryl --format=github --strict .
         shell: bash
@@ -317,41 +269,19 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: cargo:cargo-shear,cargo-binstall,mr-boxington
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
+      - name: Set up mise
+        uses: jdx/mise-action@v5.2.7
         with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Set up mr boxington
-        uses: jdx/mr-boxington-action@v1.7.3
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Run Shear
-        run: nix develop --command mbx shear --deny-warnings
-        shell: bash
-  statix:
-    name: statix
-    if: ${{ always() && !failure() && !cancelled() &&
-      (needs.changed-files.result == 'skipped' || needs.changed-files.outputs.nix == 'true') }}
-    needs: changed-files
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
-        with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          prefetch-dependencies: false
-      - name: Run statix
-        run: nix --quiet run .#statix -- check
+        run: cargo shear --deny-warnings
         shell: bash
   test:
     name: Test
@@ -362,17 +292,19 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: cargo:cargo-nextest,cargo-binstall
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Nix
-        uses: ponko2/actions/setup-nix@v1.8.0
+      - name: Set up mise
+        uses: jdx/mise-action@v5.2.7
         with:
-          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          cache_key_prefix: mise-v1-${{ github.job }}
       - name: Set up mr boxington
         uses: jdx/mr-boxington-action@v1.7.3
       - name: Run Test
-        run: nix develop --command mbx nextest run --locked --no-tests=warn
+        run: mbx nextest run --locked --no-tests=warn
         shell: bash
