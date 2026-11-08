@@ -1,21 +1,24 @@
-[env]
-_.nix = true
-
-[plugins]
-nix = "https://github.com/joshbode/mise-nix"
-
 [settings]
-env_cache = true
+idiomatic_version_file_enable_tools = ["rust"]
 
 [tools]
 "aqua:owenlamont/ryl" = "latest"
+"cargo:cargo-nextest" = "latest"
+"cargo:cargo-shear" = "latest"
 "npm:@commitlint/cli" = "latest"
+cargo-binstall = "latest"
 editorconfig-checker = "latest"
 hk = "latest"
 jactionlint = "latest"
 mr-boxington = "latest"
 oxfmt = "latest"
+rust-analyzer = "latest"
 shellcheck = "latest"
+
+[tools."cargo:cargo-features-manager"]
+version = "latest"
+lazy = true
+lazy_bins = ["cargo-features"]
 
 [wrappers.cargo]
 command = "mbx"

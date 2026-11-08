@@ -7,23 +7,16 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'jdx/mise-action@v5.2.7'
         - 'jdx/mr-boxington-action@v1.7.3'
-        - 'ponko2/actions@v1.8.0'
         - 'tj-actions/changed-files@v47.0.6'
     '.github/workflows/release.yml':
         - 'actions/checkout@v7.0.1'
         - 'googleapis/release-please-action@v5.0.0'
-        - 'ponko2/actions@v1.8.0'
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
-    'cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866':
-        ref: 'v17'
-        commit: 'sha1-38b082610b782e7e93e209c35fd730d399dee866'
-        owner_id: 36824654
-        repo_id: 211717886
     'googleapis/release-please-action@v5.0.0':
         ref: 'v5.0.0'
         commit: 'sha1-45996ed1f6d02564a971a2fa1b5860e934307cf7'
@@ -39,19 +32,6 @@ dependencies:
         commit: 'sha1-88acf2bb50552c7c508cbac13e5f8c576b95b1de'
         owner_id: 216188
         repo_id: 1345301886
-    'nixos/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6':
-        ref: 'v1.0.0'
-        commit: 'sha1-62c1943b776c509394b550f3f983adc14e9212d6'
-        owner_id: 487568
-        repo_id: 1140751168
-    'ponko2/actions@v1.8.0':
-        ref: 'v1.8.0'
-        commit: 'sha1-7bd9f0fca49fd0950a9425c1889520d43077b497'
-        owner_id: 901860
-        repo_id: 1006261717
-        uses:
-            - 'cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866'
-            - 'nixos/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6'
     'tj-actions/changed-files@v47.0.6':
         ref: 'v47.0.6'
         commit: 'sha1-9426d40962ed5378910ee2e21d5f8c6fcbf2dd96'
