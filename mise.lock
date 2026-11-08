@@ -90,7 +90,7 @@ backend = "cargo:cargo-features-manager"
 specifiers = ["latest"]
 
 [[tools."cargo:cargo-nextest"]]
-version = "0.9.150"
+version = "0.9.151"
 backend = "cargo:cargo-nextest"
 specifiers = ["latest"]
 
