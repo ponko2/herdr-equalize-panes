@@ -5,7 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@v7.0.1'
-        - 'jdx/mise-action@v5.2.10'
+        - 'jdx/mise-action@v5.3.0'
         - 'jdx/mr-boxington-action@v1.7.4'
         - 'tj-actions/changed-files@v47.0.6'
     '.github/workflows/release.yml':
@@ -22,9 +22,9 @@ dependencies:
         commit: 'sha1-45996ed1f6d02564a971a2fa1b5860e934307cf7'
         owner_id: 16785467
         repo_id: 262236530
-    'jdx/mise-action@v5.2.10':
-        ref: 'v5.2.10'
-        commit: 'sha1-90f833d396d0cc3674b631d2d225e306476c303a'
+    'jdx/mise-action@v5.3.0':
+        ref: 'v5.3.0'
+        commit: 'sha1-924e7c586e33d7d4bae9c14e26c5d22e2beb6e78'
         owner_id: 216188
         repo_id: 738284564
     'jdx/mr-boxington-action@v1.7.4':
