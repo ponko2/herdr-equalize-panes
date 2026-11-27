@@ -4,7 +4,7 @@ version = "0.2.6"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.104"
+anyhow = "1.0.105"
 env_logger = { version = "0.11.12", default-features = false }
 log = "0.4.35"
 serde = { version = "1.0.229", features = ["derive"] }
